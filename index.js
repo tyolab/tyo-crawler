@@ -27,6 +27,8 @@ var params = new Params({
   "with-curl": false,
   "viewonly": false,
   "seed": false,
+  "local-storage": null,
+  "actions-file": null,
 });
 
 var opts = params.getOpts();
@@ -54,6 +56,40 @@ opts.redis.link_key_prefix = namespace + ":l:";
 const wwwPath = opts["webroot"]; // || path.resolve(__dirname, "../www/");
 opts.webroot = wwwPath;
 
+var local_storage_data = null;
+function read_local_storage() {
+    var local_storage = opts["local-storage"];
+    if (local_storage) {
+        try {
+            var data = require(local_storage);
+            if (data) {
+               local_storage_data = data;
+            }
+        }
+        catch (err) {
+            console.error("Error reading local storage file: " + err);
+        }
+    }
+}
+
+read_local_storage();
+
+function read_actions_file() {
+    var actions_file = opts["actions-file"];
+    if (actions_file) {
+        try {
+            var data = require(actions_file);
+            if (data) {
+                opts.actions = data;
+            }
+        }
+        catch (err) {
+            console.error("Error reading actions file: " + err);
+        }
+    }
+}
+read_actions_file();
+
 var crawler = new Crawler(opts);
 crawler.options = {level: opts.level, local_path: opts.local_path};
 
@@ -68,6 +104,8 @@ crawl_options.viewonly = opts["viewonly"];
 crawl_options.show_window = opts["show-window"];
 crawl_options.with_browser = opts["with-browser"];
 crawl_options.next_crawl_wait_time = opts["next-crawl-wait-time"];
+crawl_options.local_storage = local_storage_data;
+crawl_options.actions = opts.actions;
 
 async function connect_database() {
     console.log("We are using redis server for link caching: " + opts.dbhost);
