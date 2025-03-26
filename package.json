@@ -1,0 +1,35 @@
+{
+  "name": "crawler-puppeteer",
+  "version": "0.0.1",
+  "description": "A web crawler with puppeteer",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/e-tang/crawler-puppeteer.git"
+  },
+  "keywords": [
+    "crawler",
+    "web",
+    "scrapper",
+    "puppeteer",
+    "headless",
+    "browser"
+  ],
+  "author": "Eric Tang",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/e-tang/crawler-puppeteer/issues"
+  },
+  "homepage": "https://github.com/e-tang/crawler-puppeteer#readme",
+  "dependencies": {
+    "async": "^3.2.6",
+    "cheerio": "^1.0.0",
+    "follow-redirects": "^1.15.9",
+    "node-programmer": "^0.0.29",
+    "puppeteer": "^24.4.0",
+    "redis": "^4.7.0"
+  }
+}
