@@ -1,4 +1,4 @@
-# Crawler-Puppeteer
+# tyo-crawler
 
 This is a web crawler built using Node.js and Puppeteer, designed for flexible and powerful web scraping and data extraction. It supports various features like link following, pattern matching, cookie handling, local storage interaction, and more. It uses Redis for link caching and management.
 
@@ -23,8 +23,8 @@ This is a web crawler built using Node.js and Puppeteer, designed for flexible a
 1.  **Clone the repository:**
 
     ```bash
-    git clone https://github.com/e-tang/crawler-puppeteer.git
-    cd crawler-puppeteer
+    git clone https://github.com/e-tang/tyo-crawler.git
+    cd tyo-crawler
     ```
 
 2.  **Install dependencies:**
@@ -47,7 +47,7 @@ This is a web crawler built using Node.js and Puppeteer, designed for flexible a
     Alternatively, you can use Docker / Docker Compose provided in the repository to run Redis:
     
     ```bash
-    cd crawler-puppeteer
+    cd tyo-crawler
     cd docker
     docker-compose up -d
     ```

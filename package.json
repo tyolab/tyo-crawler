@@ -1,5 +1,5 @@
 {
-  "name": "crawler-puppeteer",
+  "name": "tyo-crawler",
   "version": "0.0.1",
   "description": "A web crawler with puppeteer",
   "main": "index.js",
@@ -8,7 +8,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/e-tang/crawler-puppeteer.git"
+    "url": "git+https://github.com/e-tang/tyo-crawler.git"
   },
   "keywords": [
     "crawler",
@@ -21,9 +21,9 @@
   "author": "Eric Tang",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/e-tang/crawler-puppeteer/issues"
+    "url": "https://github.com/e-tang/tyo-crawler/issues"
   },
-  "homepage": "https://github.com/e-tang/crawler-puppeteer#readme",
+  "homepage": "https://github.com/e-tang/tyo-crawler#readme",
   "dependencies": {
     "async": "^3.2.6",
     "cheerio": "^1.0.0",
