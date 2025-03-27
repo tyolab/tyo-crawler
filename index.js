@@ -22,6 +22,7 @@ var params = new Params({
   "with-cookies": false,
   "webroot": './www',
   "clone": false,
+  "clone-path": null,                 // url path if it is for clone, only urls that match this path will be downloaded
   "exclude": [],
   "include": [],
   "with-curl": false,
@@ -29,6 +30,8 @@ var params = new Params({
   "seed": false,
   "local-storage": null,
   "actions-file": null,
+  "wait-time": 1200,                 // default wait time for next crawl, 1 millisecond
+  "browser-wait-time": 0,         // default wait time for the browser          
 });
 
 var opts = params.getOpts();
@@ -106,6 +109,8 @@ crawl_options.with_browser = opts["with-browser"];
 crawl_options.next_crawl_wait_time = opts["next-crawl-wait-time"];
 crawl_options.local_storage = local_storage_data;
 crawl_options.actions = opts.actions;
+crawl_options.wait_time = opts["wait-time"];
+crawl_options.browser_wait_time = opts["browser-wait-time"];
 
 async function connect_database() {
     console.log("We are using redis server for link caching: " + opts.dbhost);
@@ -137,22 +142,37 @@ async function main() {
         seeds.map((url, index) => {
             var newUrl = new URL(url);
 
-            // strictly only the 
-            pattern.push(newUrl.host + (newUrl.pathname || ""));
+            // strictly only the host but not the path
+            var match_with = newUrl.host;
+
+            if (opts.clone_path && opts.clone_path.length > 0) {
+                if (opts.clone) {
+                    match_with += (opts.clone_path[0] == '/' ? opts.clone_path : '/' + opts.clone_path);
+                }
+                else {
+                    console.warn("Clone path is set, but crawler is not set to clone mode, so the clone path will be ignored: " + opts.clone_path);
+                }
+            }
+            pattern.push(match_with);
+            console.log("Crawl url pattern: " + pattern + "*");
         });
 
         var match = function(url) {
             // this can be used for further link matching
             // for the domain wise links downloading has been done
+
+            if (pattern && pattern.length > 0) {
+                for (var i = 0; i < pattern.length; ++i) {
+                    var newUrl = new URL(url);
+                    var newStr = newUrl.host + (newUrl.pathname || "");
+                    if (newStr.match(pattern[i])) {
+                        return true;
+                    }
+                }
+                return false;
+            }
+
             return true;
-            // for (var i = 0; i < pattern.length; ++i) {
-            //     var newUrl = new URL(url);
-            //     var newStr = newUrl.host + (newUrl.pathname || "");
-            //     if (newStr.match(pattern[i])) {
-            //         return true;
-            //     }
-            // }
-            // return false;
         }
 
         var func = async function () {
