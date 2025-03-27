@@ -1,0 +1,78 @@
+[
+    {
+      "if": "#login-form",
+      "then": [
+        {
+          "action": "type",
+          "selector": "input[name='username']",
+          "value": "your_username"
+        },
+        {
+          "action": "type",
+          "selector": "input[name='password']",
+          "value": "your_password"
+        },
+        {
+          "action": "click",
+          "selector": "button[type='submit']",
+          "on": true
+        }
+      ]
+    },
+    {
+      "if": ".two-factor-auth",
+      "then": [
+        {
+          "action": "type",
+          "selector": "input[name='code']",
+          "value": "123456"
+        },
+        {
+          "action": "click",
+          "selector": "button[type='submit']",
+          "on": true
+        }
+      ]
+    },
+    {
+      "if": "#search-form",
+      "then": [
+        {
+          "action": "type",
+          "selector": "input[name='q']",
+          "value": "search term"
+        },
+        {
+          "action": "click",
+          "selector": "button[type='submit']",
+          "on": true
+        }
+      ]
+    },
+    {
+      "if": ".cookie-consent",
+      "then": [
+        {
+          "action": "click",
+          "selector": "button.accept-cookies",
+          "on": true
+        }
+      ]
+    },
+    {
+      "if": ".profile-page",
+      "then": [
+        {
+          "action": "eval",
+          "selector": "#user-id",
+          "value": "1234"
+        },
+        {
+          "action": "hold",
+          "url": "https://www.example.com/profile",
+          "on": false
+        }
+      ]
+    }
+  ]
+  
