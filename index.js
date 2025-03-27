@@ -204,7 +204,11 @@ async function main() {
                         // if the links are redirected, they are not allowed
                         crawler.redis_client.add_allowed_host(fileObj.parsedUrl.hostname, fileObj.path);
                         done();
-                    });
+                    },
+                    {
+                        force: true,
+                    }
+                );
 
                 }, 
                 ()=> {
