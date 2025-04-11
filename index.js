@@ -31,7 +31,8 @@ var params = new Params({
   "local-storage": null,
   "actions-file": null,
   "wait-time": 1200,                 // default wait time for next crawl, 1 millisecond
-  "browser-wait-time": 0,         // default wait time for the browser          
+  "browser-wait-time": 0,            // default wait time for the browser 
+  "processor": null,        
 });
 
 var opts = params.getOpts();
@@ -93,6 +94,28 @@ function read_actions_file() {
 }
 read_actions_file();
 
+let processor_func = null;
+function load_processor() {
+    var processor = opts["processor"];
+    if (processor) {
+        try {
+            var processor_path = path.join(__dirname, 'processors', processor);
+            var Processor = require(processor_path);
+            if (Processor) {
+                let processor_instance = new Processor();
+                processor_func = function (result, options, resolve, reject) {
+                    return processor_instance.process_html(result, options, resolve, reject);
+                }
+                console.debug("Using processor: " + processor);
+            }
+        }
+        catch (err) {
+            console.error("Error loading processor: " + err);
+        }
+    }
+}
+load_processor();
+
 var crawler = new Crawler(opts);
 crawler.options = {level: opts.level, local_path: opts.local_path};
 
@@ -111,6 +134,7 @@ crawl_options.local_storage = local_storage_data;
 crawl_options.actions = opts.actions;
 crawl_options.wait_time = opts["wait-time"];
 crawl_options.browser_wait_time = opts["browser-wait-time"];
+crawl_options.processor = processor_func;
 
 async function connect_database() {
     console.log("We are using redis server for link caching: " + opts.dbhost);
