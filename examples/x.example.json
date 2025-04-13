@@ -1,0 +1,68 @@
+[
+    {
+        "if": "a[href*=login]",
+        "then": [
+            {
+                "action": "click",
+                "selector": "a[href*=login]"
+            },
+            {
+                "action": "wait",
+                "time": 2000
+            },
+            {
+                "action": "wait",
+                "selector": "input[autocomplete='username']"
+            },
+            {
+                "action": "type",
+                "selector": "input[autocomplete='username']",
+                "value": "YOUR_X_USERNAME"
+            },
+            {
+                "action": "click",
+                "selector": "button[role='button'] span span",
+                "text": "Next"
+            },
+            {
+                "action": "wait",
+                "time": 2000
+            },
+            {
+                "action": "type",
+                "selector": "input[name='password']",
+                "value": "YOUR_X_PASSWORD"
+            },
+            {
+                "action": "click",
+                "selector": "button[data-testid='LoginForm_Login_Button']"
+            },            
+            {
+                "action": "wait",
+                "time": 80000
+            },
+            {
+                "action": "saveCookies"
+            }
+        ]
+    },
+    {
+        "repeat": [
+            { 
+                "action": "scroll",
+                "value": 50
+            },
+            {
+                "action": "evaluate"
+            },
+            {
+                "action": "process"
+            },
+            { 
+                "action": "wait",
+                "time": 1000
+            }
+        ],
+        "failed_limit": 4
+    }
+]
