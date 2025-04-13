@@ -61,16 +61,34 @@ class XProcessor extends Processor {
         return media;
     }
 
+    extractLinks($, tweetElement) {
+        /**
+         * I would like to include all external media links (e.g., videos, gifs, etc.) in the media array.
+         * However, I need to check if the media is a video or gif and handle it accordingly.
+         * We don't need to download them, we will still save the links in the media array.
+         */
+        const links = [];
+        $(tweetElement).find('a').each((index, link) => {
+            const href = $(link).attr('href');
+            if (href && !href.startsWith('/')) { // Exclude internal links
+                links.push(href);
+            }
+        });
+        return links;
+    }
+
     extractTweetData($, tweetElement) {
         const tweetId = $(tweetElement).find('article').attr('data-testid');
         const tweetText = $(tweetElement).find('[data-testid="tweetText"]').text().trim();
         const dateText = $(tweetElement).find('time').attr('datetime');
         const media = this.extractMedia($, tweetElement, tweetId);
+        const links = this.extractLinks($, tweetElement);
 
         return {
             date: dateText,
             tweet: tweetText,
             media: media,
+            links: links
         };
     }
 
@@ -137,6 +155,9 @@ class XProcessor extends Processor {
 
         $('div[data-testid="cellInnerDiv"]').each((index, element) => {
             const tweetData = this.extractTweetData($, element);
+            console.log(`Tweet ID: ${tweetData.tweet}`);
+            console.log(`Tweet text: ${tweetData.tweet}`);
+            console.log(`Tweet date: ${tweetData.date}`);
             if (tweetData.tweet) {
                 tweets.push(tweetData);
             }

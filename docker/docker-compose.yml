@@ -5,7 +5,7 @@ services:
     volumes:
       - ./data:/bitnami/redis/data
       # - ./conf/redis-default.conf:/opt/bitnami/redis/etc/redis-default.conf
-      - ./conf/redis-bitnami.conf:/opt/bitnami/redis/etc/redis.conf
+      # - ./conf/redis.conf:/opt/bitnami/redis/etc/redis.conf
     ports:
       - 6379:6379
     restart: "always"
