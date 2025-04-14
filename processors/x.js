@@ -78,18 +78,28 @@ class XProcessor extends Processor {
     }
 
     extractTweetData($, tweetElement) {
-        const tweetId = $(tweetElement).find('article').attr('data-testid');
+        // Find the tweet link and extract the ID
+        const tweetLink = $(tweetElement).find('a[href*="/status/"]').attr('href');
+        const tweetId = tweetLink ? tweetLink.split('/status/')[1] : null;
+
         const tweetText = $(tweetElement).find('[data-testid="tweetText"]').text().trim();
         const dateText = $(tweetElement).find('time').attr('datetime');
         const media = this.extractMedia($, tweetElement, tweetId);
         const links = this.extractLinks($, tweetElement);
 
-        return {
+        let tweetData = {
+            id: tweetId,
             date: dateText,
             tweet: tweetText,
-            media: media,
-            links: links
         };
+
+        if (media.length > 0) {
+            tweetData.media = media;
+        }
+        if (links.length > 0) {
+            tweetData.links = links;
+        }
+        return tweetData;
     }
 
     loadExistingTweets() {
@@ -155,7 +165,7 @@ class XProcessor extends Processor {
 
         $('div[data-testid="cellInnerDiv"]').each((index, element) => {
             const tweetData = this.extractTweetData($, element);
-            console.log(`Tweet ID: ${tweetData.tweet}`);
+            console.log(`Tweet ID: ${tweetData.id}`);
             console.log(`Tweet text: ${tweetData.tweet}`);
             console.log(`Tweet date: ${tweetData.date}`);
             if (tweetData.tweet) {
