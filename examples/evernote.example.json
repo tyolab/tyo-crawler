@@ -4,6 +4,14 @@
         "time": 2000
     },
     {
+        "action": "wait",
+        "selector": "iframe[src*='ce']"
+    },
+    {
+        "action": "wait",
+        "time": 3000
+    },    
+    {
         "action": "iframe",
         "selector": "iframe[src*='ce']"
     },
