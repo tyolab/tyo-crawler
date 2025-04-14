@@ -22,7 +22,7 @@ const path = require('path');
 const Processor = require('./base');
 
 class XProcessor extends Processor {
-    constructor() {
+    constructor(options) {
         super('x', 'X Processor');
         this.outputDir = './output'; // Default output directory
         this.outputFile = 'tweets.json'; // Default output file
@@ -184,7 +184,7 @@ class XProcessor extends Processor {
         }
         if (resolve)
             resolve();
-        return ret;
+        return { failed: ret };
     }
 }
 
