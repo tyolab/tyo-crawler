@@ -1,9 +1,9 @@
 const path = require('path');
 
 const async = require('async');
+const fs = require('fs');
 
 var Params = require('node-programmer/params');
-const { electron } = require('process');
 
 var Crawler = require('./lib/crawler');
 
@@ -31,7 +31,7 @@ var params = new Params({
   "local-storage": null,
   "actions-file": null,
   "wait-time": 1200,                 // default wait time for next crawl, 1 millisecond
-  "browser-wait-time": 0,            // default wait time for the browser 
+  "browser-wait-time": 300,            // default wait time for the browser 
   "processor": null,        
 });
 
@@ -99,7 +99,25 @@ function load_processor() {
     var processor = opts["processor"];
     if (processor) {
         try {
-            var processor_path = path.join(__dirname, 'processors', processor);
+            var processor_path = null;
+
+            if (!processor.startsWith(path)) {
+                processor_path = path.join(__dirname, 'processors', processor);
+            }
+            else {
+                processor_path = processor;
+            }
+
+            if (!processor_path.endsWith('.js')) {
+                processor_path += '.js';
+            }
+            processor_path = path.resolve(processor_path);
+    
+            if (!fs.existsSync(processor_path)) {
+                console.error("Processor file not found: " + processor_path);
+                return;
+            }
+
             var Processor = require(processor_path);
             if (Processor) {
                 let processor_instance = new Processor();

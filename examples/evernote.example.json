@@ -1,0 +1,21 @@
+[
+    {
+        "action": "wait",
+        "time": 2000
+    },
+    {
+        "action": "iframe",
+        "selector": "iframe[src*='ce']"
+    },
+    {
+        "action": "process"
+    },
+    {
+        "action": "wait",
+        "time": 1000
+    },
+    {
+        "action": "scroll",
+        "value": 200
+    }
+]
