@@ -19,6 +19,8 @@ const fs = require('fs');
 const https = require('https');
 const path = require('path');
 
+const uu = require('url-unshort')()
+
 const Processor = require('./base');
 
 class XProcessor extends Processor {
@@ -42,7 +44,15 @@ class XProcessor extends Processor {
             console.log(`Image source: ${imgSrc}`);
             // Check if the image source is a Twitter media URL
             if (imgSrc && imgSrc.startsWith('https://pbs.twimg.com/media/')) {
-                const mediaFileName = `${tweetId}_${path.basename(imgSrc).split('?')[0]}`;
+                let parsedUrl = new URL(imgSrc);
+                // check query to if it has format, if yes then extract it
+                let query = parsedUrl.searchParams.get('format');
+                let ext = "";
+                if (query) {
+                    ext = '.' + query;
+                }
+
+                const mediaFileName = `${tweetId}_${path.basename(imgSrc).split('?')[0]}` + ext; // Ensure the file name is unique
                 const mediaFilePath = path.join(imagesDir, mediaFileName);
 
                 // Download and save the image
@@ -71,7 +81,22 @@ class XProcessor extends Processor {
         $(tweetElement).find('a').each((index, link) => {
             const href = $(link).attr('href');
             if (href && !href.startsWith('/')) { // Exclude internal links
-                links.push(href);
+                // unshort the URL if it's a shortened link
+                uu(href, (err, unshortenedUrl) => {
+                    if (err) {
+                        console.error(`Error unshortening URL ${href}:`, err);
+                        return;
+                    }
+                    // Check if the URL is a video or gif
+                    if (unshortenedUrl.includes('video') || unshortenedUrl.includes('gif')) {
+                        // Add the unshortened URL to the media array
+                        links.push(unshortenedUrl);
+                    }
+                    // Add the unshortened URL to the links array
+                    else if (unshortenedUrl.includes('http')) {
+                        links.push(unshortenedUrl);
+                    }
+                });
             }
         });
         return links;

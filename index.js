@@ -31,8 +31,9 @@ var params = new Params({
   "local-storage": null,
   "actions-file": null,
   "wait-time": 1200,                 // default wait time for next crawl, 1 millisecond
-  "browser-wait-time": 300,            // default wait time for the browser 
+  "browser-wait-time": 0,            // default wait time for the browser 
   "processor": null,        
+  "links-file": null,
 });
 
 var opts = params.getOpts();
@@ -47,15 +48,8 @@ if (optCount <= 0 || !inputs || inputs.length === 0) {
     process.exit(-1);
 }
 
-var firstUrl = new URL(inputs[0]);
-
-// --hsn, host as namespace
-var namespace = opts["han"] ? firstUrl.hostname : 'tmp'; // if not, just use default namespace which should be "tmp"
-opts.redis = opts.redis || {};
-opts.redis.namespace = namespace;
-opts.redis.separator = ":";
-/// temporary link key prefix
-opts.redis.link_key_prefix = namespace + ":l:";
+var firstUrl = null;
+var namespace = null;
 
 const wwwPath = opts["webroot"]; // || path.resolve(__dirname, "../www/");
 opts.webroot = wwwPath;
@@ -134,6 +128,34 @@ function load_processor() {
 }
 load_processor();
 
+let links = null
+function load_links_file() {
+    var links_file = opts["links-file"];
+    if (links_file) {
+        try {
+            var data = fs.readFileSync(links_file, 'utf8');
+            if (data) {
+                links = data.split('\n');
+            }
+        }
+        catch (err) {
+            console.error("Error reading links file: " + err);
+        }
+    }
+}
+load_links_file();
+
+let url = inputs.length > 0 ? inputs[0] : (links && links.length > 0 ? links[0] : null);
+firstUrl = url ? new URL(url) : null;
+
+// --hsn, host as namespace
+namespace = (opts["han"] && firstUrl) ? firstUrl.hostname : 'tmp'; // if not, just use default namespace which should be "tmp"
+opts.redis = opts.redis || {};
+opts.redis.namespace = namespace;
+opts.redis.separator = ":";
+/// temporary link key prefix
+opts.redis.link_key_prefix = namespace + ":l:";
+
 var crawler = new Crawler(opts);
 crawler.options = {level: opts.level, local_path: opts.local_path};
 
@@ -166,11 +188,36 @@ async function main() {
     if (opts.clone)
         opts.seed = true;
 
+    if (links && links.length > 0) 
+        opts.seed = true;
+
     if (opts.seed === true) {
 
         var seeds = inputs;
         if (seeds && typeof seeds === 'string')
             seeds = [seeds];
+
+        if (links && links.length > 0) {
+            seeds = seeds.concat(links);
+        }
+
+        // filter out the empty urls
+        seeds = seeds.filter((url) => {
+            if (url && url.length > 0) {
+                try {
+                    new URL(url);
+                    return true;
+                }
+                catch (err) {
+                    console.error("Invalid url: " + url);
+                    return false;
+                }
+            }
+            return false;
+        }
+        );
+        // remove duplicates
+        seeds = [...new Set(seeds)];
 
         var pattern = [];
 
@@ -182,6 +229,9 @@ async function main() {
         }
 
         seeds.map((url, index) => {
+            if (!url)
+                return;
+
             var newUrl = new URL(url);
 
             // strictly only the host but not the path
@@ -193,6 +243,15 @@ async function main() {
                 }
                 else {
                     console.warn("Clone path is set, but crawler is not set to clone mode, so the clone path will be ignored: " + opts.clone_path);
+                }
+            }
+            // check if the match_with already in the pattern
+            if (pattern && pattern.length > 0) {
+                for (var i = 0; i < pattern.length; ++i) {
+                    if (pattern[i] === match_with) {
+                        // console.warn("The url pattern already exists: " + match_with);
+                        return;
+                    }
                 }
             }
             pattern.push(match_with);
@@ -236,22 +295,28 @@ async function main() {
 
             async.eachSeries(seeds, 
                 (url, done) => {
-                    var fileObj = crawler.create_dest_file(url);
-                    if (!fileObj) {
-                        throw new Error("Unrecognised url: " + url);
+                    try {
+                        var fileObj = crawler.create_dest_file(url);
+                        if (!fileObj) {
+                            throw new Error("Unrecognised url: " + url);
+                        }
+                        crawl_options.domains.push(fileObj.parsedUrl.hostname);
+                        crawler.redis_client.add_link(url, function() {
+                            // by default we only allow the links that matching the seeds
+                            // if the links are redirected, they are not allowed
+                            crawler.redis_client.add_allowed_host(fileObj.parsedUrl.hostname, fileObj.path);
+                            done();
+                            },
+                            {
+                                force: true,
+                            }
+                        );
                     }
-                    crawl_options.domains.push(fileObj.parsedUrl.hostname);
-                    crawler.redis_client.add_link(url, function() {
-                        // by default we only allow the links that matching the seeds
-                        // if the links are redirected, they are not allowed
-                        crawler.redis_client.add_allowed_host(fileObj.parsedUrl.hostname, fileObj.path);
-                        done();
-                    },
-                    {
-                        force: true,
+                    catch (err) {
+                        console.error("Error creating destination file for url: " + url);
+                        console.error(err);
+                        done(err);
                     }
-                );
-
                 }, 
                 ()=> {
                     crawler.start(crawl_options);
@@ -280,8 +345,8 @@ async function main() {
         }
     }
     else {
-        if (inputs.length > 1) {
-            console.error("Too many inputs");
+        if (!inputs || inputs.length === 0) {
+            console.error("Usage: node " + process.argv[1] + " url");
             process.exit(-1);
         }
 
