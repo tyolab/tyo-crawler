@@ -31,6 +31,6 @@
     "node-programmer": "^0.0.29",
     "puppeteer": "^24.4.0",
     "redis": "^4.7.0",
-    "url-unshort": "^6.1.0"
+    "unshortener": "^0.1.0"
   }
 }

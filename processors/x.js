@@ -19,7 +19,8 @@ const fs = require('fs');
 const https = require('https');
 const path = require('path');
 
-const uu = require('url-unshort')()
+// const uu = require('unshorten-url')(); // buggy module, doesn't work properly, not be able to load
+var unshortener = require('unshortener');
 
 const Processor = require('./base');
 
@@ -82,21 +83,23 @@ class XProcessor extends Processor {
             const href = $(link).attr('href');
             if (href && !href.startsWith('/')) { // Exclude internal links
                 // unshort the URL if it's a shortened link
-                uu(href, (err, unshortenedUrl) => {
-                    if (err) {
-                        console.error(`Error unshortening URL ${href}:`, err);
-                        return;
-                    }
-                    // Check if the URL is a video or gif
-                    if (unshortenedUrl.includes('video') || unshortenedUrl.includes('gif')) {
-                        // Add the unshortened URL to the media array
-                        links.push(unshortenedUrl);
-                    }
-                    // Add the unshortened URL to the links array
-                    else if (unshortenedUrl.includes('http')) {
-                        links.push(unshortenedUrl);
-                    }
-                });
+                // unshortener.expand(href, (err, unshortenedUrl) => {
+                //     if (err) {
+                //         console.error(`Error unshortening URL ${href}:`, err);
+                //         return;
+                //     }
+                //     // Check if the URL is a video or gif
+                //     if (unshortenedUrl.includes('video') || unshortenedUrl.includes('gif')) {
+                //         // Add the unshortened URL to the media array
+                //         links.push(unshortenedUrl);
+                //     }
+                //     // Add the unshortened URL to the links array
+                //     else if (unshortenedUrl.includes('http')) {
+                //         links.push(unshortenedUrl);
+                //     }
+                // });
+                // all unshortener libraries are buggy, so we will just use the original link
+                links.push(href);
             }
         });
         return links;
@@ -168,7 +171,7 @@ class XProcessor extends Processor {
         
         // get the username from the URL
         const url = result.href;
-        let ret = false;
+        let ret = true;
         try {
             const username = url.split('/')[3];
             // this.outputDir += path.join(this.outputDir, `${username}`); // Set the output file based on the username
@@ -189,6 +192,7 @@ class XProcessor extends Processor {
         console.log('Extracting tweets from HTML...');
 
         $('div[data-testid="cellInnerDiv"]').each((index, element) => {
+            console.log("#####################");
             const tweetData = this.extractTweetData($, element);
             console.log(`Tweet ID: ${tweetData.id}`);
             console.log(`Tweet text: ${tweetData.tweet}`);
@@ -196,13 +200,14 @@ class XProcessor extends Processor {
             if (tweetData.tweet) {
                 tweets.push(tweetData);
             }
+            console.log("#####################");
         });
 
         const updatedTweets = this.mergeTweets(existingTweets, tweets);
         if (updatedTweets.length > existingTweetCount) {
             console.log(`Found ${updatedTweets.length - existingTweetCount} new tweets.`);
             this.saveTweets(updatedTweets);
-            ret = true;
+            ret = false;
         }
         else {
             console.log('No new tweets found.');

@@ -7,6 +7,17 @@ var Params = require('node-programmer/params');
 
 var Crawler = require('./lib/crawler');
 
+var XProcessor = require('./processors/x');
+
+// import path from 'path';
+// import async from 'async';
+// import fs from 'fs';
+// import { URL } from 'url';
+
+// import * as Params from 'node-programmer/params';
+// import Crawler from './lib/crawler.js';
+// import XProcessor from './processors/x.js';
+
 var params = new Params({
   "click": null,
   "show-window": false,
@@ -95,30 +106,36 @@ function load_processor() {
         try {
             var processor_path = null;
 
-            if (!processor.startsWith(path)) {
-                processor_path = path.join(__dirname, 'processors', processor);
+            if (!processor.startsWith(path.sep)) {
+                processor_path = './processors' + path.sep + processor;
             }
             else {
                 processor_path = processor;
-            }
 
-            if (!processor_path.endsWith('.js')) {
-                processor_path += '.js';
-            }
-            processor_path = path.resolve(processor_path);
-    
-            if (!fs.existsSync(processor_path)) {
-                console.error("Processor file not found: " + processor_path);
-                return;
-            }
-
-            var Processor = require(processor_path);
-            if (Processor) {
-                let processor_instance = new Processor();
-                processor_func = function (result, options, resolve, reject) {
-                    return processor_instance.process_html(result, options, resolve, reject);
+                if (!processor_path.endsWith('.js')) {
+                    processor_path += '.js';
                 }
-                console.debug("Using processor: " + processor);
+                processor_path = path.resolve(processor_path);
+        
+                if (!fs.existsSync(processor_path)) {
+                    console.error("Processor file not found: " + processor_path);
+                    return;
+                }
+            }
+
+            try {
+                var Processor = require(processor_path);
+                if (Processor) {
+                    let processor_instance = new Processor();
+                    processor_func = function (result, options, resolve, reject) {
+                        return processor_instance.process_html(result, options, resolve, reject);
+                    }
+                    console.debug("Using processor: " + processor);
+                }
+            }
+            catch (err) {
+                console.error("Error loading processor: " + err);
+                process.exit(-1);
             }
         }
         catch (err) {
