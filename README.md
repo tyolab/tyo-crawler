@@ -196,3 +196,7 @@ But some pages may require authentication or other actions. In such cases, you c
 ```bash
 node crawler.js --actions-file actions.json --show-window true example.com/login
 ```
+
+## TODO
+-   There are a lot to do
+-   COOKIES (--with-cookies) is not working

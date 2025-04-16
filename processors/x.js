@@ -33,7 +33,7 @@ class XProcessor extends Processor {
 
     extractMedia($, tweetElement, tweetId) {
         const media = [];
-        const imagesDir = path.join(this.outputDir, 'images'); // Destination folder for images
+        const imagesDir = './images'; //path.join(this.outputDir, 'images'); // Destination folder for images
 
         // Ensure the images directory exists
         if (!fs.existsSync(imagesDir)) {
