@@ -34,6 +34,7 @@ class XProcessor extends Processor {
     extractMedia($, tweetElement, tweetId) {
         const media = [];
         const imagesDir = './images'; //path.join(this.outputDir, 'images'); // Destination folder for images
+        const destImagesDir = path.join(this.outputDir, 'images'); // Destination folder for images
 
         // Ensure the images directory exists
         if (!fs.existsSync(imagesDir)) {
@@ -55,9 +56,10 @@ class XProcessor extends Processor {
 
                 const mediaFileName = `${tweetId}_${path.basename(imgSrc).split('?')[0]}` + ext; // Ensure the file name is unique
                 const mediaFilePath = path.join(imagesDir, mediaFileName);
+                const destMediaFilePath = path.join(destImagesDir, mediaFileName);
 
                 // Download and save the image
-                const file = fs.createWriteStream(mediaFilePath);
+                const file = fs.createWriteStream(destMediaFilePath);
                 https.get(imgSrc, (response) => {
                     response.pipe(file);
                     file.on('finish', () => file.close());

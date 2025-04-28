@@ -7,8 +7,6 @@ var Params = require('node-programmer/params');
 
 var Crawler = require('./lib/crawler');
 
-var XProcessor = require('./processors/x');
-
 // import path from 'path';
 // import async from 'async';
 // import fs from 'fs';
