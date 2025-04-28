@@ -43,6 +43,7 @@ var params = new Params({
   "browser-wait-time": 0,            // default wait time for the browser 
   "processor": null,        
   "links-file": null,
+  "cookies-file": null,
 });
 
 var opts = params.getOpts();
@@ -160,6 +161,24 @@ function load_links_file() {
 }
 load_links_file();
 
+let cookies = null;
+function read_cookies_file() {
+    var cookie_file = opts["cookies-file"];
+    if (cookie_file) {
+        try {
+            var data = fs.readFileSync(cookie_file, 'utf8');
+            // assume the cookie file is in JSON format
+            if (data) {
+                cookies = JSON.parse(data);
+            }
+        }
+        catch (err) {
+            console.error("Error reading cookie file: " + err);
+        }
+    }
+}
+read_cookies_file();
+
 let url = inputs.length > 0 ? inputs[0] : (links && links.length > 0 ? links[0] : null);
 firstUrl = url ? new URL(url) : null;
 
@@ -190,6 +209,7 @@ crawl_options.actions = opts.actions;
 crawl_options.wait_time = opts["wait-time"];
 crawl_options.browser_wait_time = opts["browser-wait-time"];
 crawl_options.processor = processor_func;
+crawl_options.cookies = cookies;
 
 async function connect_database() {
     console.log("We are using redis server for link caching: " + opts.dbhost);
