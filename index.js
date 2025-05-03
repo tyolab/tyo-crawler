@@ -31,7 +31,9 @@ var params = new Params({
   "with-cookies": false,
   "webroot": './www',
   "clone": false,
-  "clone-path": null,                 // url path if it is for clone, only urls that match this path will be downloaded
+  "clone-path": null,                 // url path if it is for clone, only urls that match this path will be downloaded,
+  "index-pattern": [],             // the pattern for the index page
+  "refresh-index": false,            // if the index page should be refreshed
   "exclude": [],
   "include": [],
   "with-curl": false,
@@ -44,6 +46,7 @@ var params = new Params({
   "processor": null,        
   "links-file": null,
   "cookies-file": null,
+  "exists-quit": false,              // if the file exists, then quit crawling
 });
 
 var opts = params.getOpts();
@@ -210,6 +213,9 @@ crawl_options.wait_time = opts["wait-time"];
 crawl_options.browser_wait_time = opts["browser-wait-time"];
 crawl_options.processor = processor_func;
 crawl_options.cookies = cookies;
+crawl_options.exists_quit = opts["exists-quit"];
+crawl_options.refresh_index = opts["refresh-index"];
+crawl_options.index_pattern = opts["index-pattern"];
 
 async function connect_database() {
     console.log("We are using redis server for link caching: " + opts.dbhost);
