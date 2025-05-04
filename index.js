@@ -29,7 +29,7 @@ var params = new Params({
   "dbhost": 'localhost',
   "dbport": 6379,
   "with-cookies": false,
-  "webroot": './www',
+  "webroot": null,
   "clone": false,
   "clone-path": null,                 // url path if it is for clone, only urls that match this path will be downloaded,
   "index-pattern": [],             // the pattern for the index page
@@ -47,6 +47,7 @@ var params = new Params({
   "links-file": null,
   "cookies-file": null,
   "exists-quit": false,              // if the file exists, then quit crawling
+  "change-link": true,              // if the link should be changed, for example, original link should be replaced with the local file path, this option needs to be used with --clone option, when --clone is set to false, this option will be ignored, but the --clone option will be set to true, it needs to be set to false to avoid the link change
 });
 
 var opts = params.getOpts();
@@ -64,7 +65,7 @@ if (optCount <= 0 || !inputs || inputs.length === 0) {
 var firstUrl = null;
 var namespace = null;
 
-const wwwPath = opts["webroot"]; // || path.resolve(__dirname, "../www/");
+const wwwPath = opts["webroot"] || path.resolve(process.cwd(), "./www/");
 opts.webroot = wwwPath;
 
 var local_storage_data = null;
@@ -216,6 +217,8 @@ crawl_options.cookies = cookies;
 crawl_options.exists_quit = opts["exists-quit"];
 crawl_options.refresh_index = opts["refresh-index"];
 crawl_options.index_pattern = opts["index-pattern"];
+crawl_options.webroot = opts.webroot;
+crawl_options.change_link = opts["change-link"];
 
 async function connect_database() {
     console.log("We are using redis server for link caching: " + opts.dbhost);
