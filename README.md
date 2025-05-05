@@ -132,7 +132,7 @@ This is a web crawler built using Node.js and Puppeteer, designed for flexible a
 - **Purpose:** Enables website cloning mode, downloading all resources (images, CSS, JavaScript, etc.).  
 - **Default:** `false`.  
 
-### `"clone-path": null`
+### `"path-pattern": null`
 - **Type:** string (URL path) or null  
 - **Purpose:** Specifies the URL path to match for cloning.  
 - **Default:** `null` (no specific path).  

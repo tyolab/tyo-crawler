@@ -31,7 +31,7 @@ var params = new Params({
   "with-cookies": false,
   "webroot": null,
   "clone": false,
-  "clone-path": null,                 // url path if it is for clone, only urls that match this path will be downloaded,
+  "path-pattern": null,                 // url path if it is for clone, only urls that match this path will be downloaded,
   "index-pattern": [],             // the pattern for the index page
   "refresh-index": false,            // if the index page should be refreshed
   "exclude": [],
@@ -67,6 +67,8 @@ var namespace = null;
 
 const wwwPath = opts["webroot"] || path.resolve(process.cwd(), "./www/");
 opts.webroot = wwwPath;
+opts.path_pattern = opts["path-pattern"];
+delete opts["path-pattern"];
 
 var local_storage_data = null;
 function read_local_storage() {
@@ -263,13 +265,14 @@ async function main() {
         // remove duplicates
         seeds = [...new Set(seeds)];
 
-        var pattern = [];
+        var host_pattern = [];
+        var path_pattern = [];
 
         if (opts.pattern) {
             if (typeof opts.pattern === 'string')
-                pattern.push(opts.pattern);
+                host_pattern.push(opts.pattern);
             else if (Array.isArray(opts.pattern))
-                pattern = opts.pattern;
+                host_pattern = opts.pattern;
         }
 
         seeds.map((url, index) => {
@@ -279,45 +282,59 @@ async function main() {
             var newUrl = new URL(url);
 
             // strictly only the host but not the path
-            var match_with = newUrl.host;
+            var match_with = ""; // newUrl.hostname;
+            host_pattern.push(newUrl.hostname);
 
-            if (opts.clone_path && opts.clone_path.length > 0) {
+            if (opts.path_pattern && opts.path_pattern.length > 0) {
                 if (opts.clone) {
-                    match_with += (opts.clone_path[0] == '/' ? opts.clone_path : '/' + opts.clone_path);
+                    match_with += (opts.path_pattern[0] == '/' ? opts.path_pattern : '/' + opts.path_pattern);
                 }
                 else {
-                    console.warn("Clone path is set, but crawler is not set to clone mode, so the clone path will be ignored: " + opts.clone_path);
+                    console.warn("Clone path is set, but crawler is not set to clone mode, so the clone path will be ignored: " + opts.path_pattern);
                 }
             }
             // check if the match_with already in the pattern
-            if (pattern && pattern.length > 0) {
-                for (var i = 0; i < pattern.length; ++i) {
-                    if (pattern[i] === match_with) {
+            if (path_pattern && path_pattern.length > 0) {
+                for (var i = 0; i < path_pattern.length; ++i) {
+                    if (path_pattern[i] === match_with) {
                         // console.warn("The url pattern already exists: " + match_with);
                         return;
                     }
                 }
             }
-            pattern.push(match_with);
-            console.log("Crawl url pattern: " + pattern + "*");
+            path_pattern.push(match_with);
+            console.log("Crawl url pattern: " + path_pattern + "*");
         });
 
         var match = function(url) {
             // this can be used for further link matching
             // for the domain wise links downloading has been done
-
-            if (pattern && pattern.length > 0) {
-                for (var i = 0; i < pattern.length; ++i) {
+            let matched = true;
+            if (host_pattern && host_pattern.length > 0) {
+                for (var i = 0; i < host_pattern.length; ++i) {
                     var newUrl = new URL(url);
-                    var newStr = newUrl.host + (newUrl.pathname || "");
-                    if (newStr.match(pattern[i])) {
-                        return true;
+                    var newStr = newUrl.hostname; // + (newUrl.pathname || "");
+                    if (newStr.match(host_pattern[i])) {
+                        break;
                     }
                 }
-                return false;
+                if (i >= host_pattern.length)
+                    matched = false;
             }
 
-            return true;
+            if (matched && path_pattern && path_pattern.length > 0) {
+                for (var i = 0; i < path_pattern.length; ++i) {
+                    var newUrl = new URL(url);
+                    var newStr = /* newUrl.host +  */(newUrl.pathname || "");
+                    if (newStr.match(path_pattern[i])) {
+                        break;
+                    }
+                }
+                if (i >= path_pattern.length)
+                    matched = false;
+            }
+
+            return matched;
         }
 
         var func = async function () {
