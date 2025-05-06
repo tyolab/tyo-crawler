@@ -79,7 +79,7 @@ class EvernoteProcessor extends Processor {
                     notes.push(`![image](${path.join('resources', imgFileName)})`);
 
                     // Add the image to the downloads array
-                    let download = utils.create_dest_file(imgSrc,{ type: "image", url: imgSrc, file: imgFilePath, path: resourcesFolder });
+                    let download = utils.create_dest_file(imgSrc,{ type: "image", url: imgSrc, file: imgFilePath, local_path: resourcesFolder });
                     downloads.file = imgFilePath;
                     downloads.url = imgSrc;
                     downloads.path = resourcesFolder;

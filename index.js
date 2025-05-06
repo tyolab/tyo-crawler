@@ -70,6 +70,8 @@ opts.webroot = wwwPath;
 opts.path_pattern = opts["path-pattern"];
 delete opts["path-pattern"];
 
+console.log("Using webroot: " + opts.webroot);
+
 var local_storage_data = null;
 function read_local_storage() {
     var local_storage = opts["local-storage"];
@@ -357,7 +359,7 @@ async function main() {
             async.eachSeries(seeds, 
                 (url, done) => {
                     try {
-                        var fileObj = crawler.create_dest_file(url);
+                        var fileObj = crawler.create_dest_file(url, {webroot: opts.webroot});
                         if (!fileObj) {
                             throw new Error("Unrecognised url: " + url);
                         }
