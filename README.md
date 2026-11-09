@@ -4,7 +4,7 @@ A web crawler built on Node.js and Puppeteer. It can fetch a single page, follow
 
 ## Features
 
-* **Real browser:** pages are loaded in Puppeteer (headless by default), so JavaScript-built pages work.
+* **Real browser:** pages are loaded in Puppeteer (headless by default), so JavaScript-built pages work. It uses `puppeteer-extra` with the stealth plugin to reduce the usual headless-browser fingerprints.
 * **Redis link tracking:** every link's status is stored in Redis, which prevents duplicate crawls and lets a crawl resume.
 * **Seed and clone modes:** start from one or many URLs, follow matching links, or download a whole site with its assets.
 * **Host filtering:** limit the crawl with `--pattern`, `--include` and `--exclude`.
