@@ -1,202 +1,173 @@
 # tyo-crawler
 
-This is a web crawler built using Node.js and Puppeteer, designed for flexible and powerful web scraping and data extraction. It supports various features like link following, pattern matching, cookie handling, local storage interaction, and more. It uses Redis for link caching and management.
+A web crawler built on Node.js and Puppeteer. It can fetch a single page, follow links across a site, clone a site to disk, log in by running scripted actions, and hand each page to a processor (for example to turn Evernote notes or X posts into Markdown). Redis tracks which links have been seen, so a crawl can be stopped and resumed.
 
 ## Features
 
-*   **Headless Browser Support:** Leverages Puppeteer for interacting with websites as a real browser.
-*   **Redis Integration:** Uses Redis for efficient link caching and management, preventing duplicate crawls.
-*   **Configurable Crawling:** Offers a wide range of options to customize the crawling process.
-*   **Pattern Matching:** Allows defining patterns to filter URLs to be crawled.
-*   **Cookie Handling:** Supports saving and using cookies during crawling.
-*   **Local Storage Interaction:** Can read and use data from local storage files.
-*   **Action Execution:** Can execute predefined actions on web pages.
-*   **Cloning:** Supports cloning websites by downloading all matching resources.
-*   **Exclusion/Inclusion:** Allows defining lists of URLs to exclude or include during crawling.
-*   **Curl Integration:** Can use `curl` for downloading resources.
-*   **Seed URL Support:** Can start crawling from multiple seed URLs.
-*   **Wait Times:** Configurable wait times for page loading and between crawls.
-* **View Only:** Can be used to just view the page without downloading.
+* **Real browser:** pages are loaded in Puppeteer (headless by default), so JavaScript-built pages work.
+* **Redis link tracking:** every link's status is stored in Redis, which prevents duplicate crawls and lets a crawl resume.
+* **Seed and clone modes:** start from one or many URLs, follow matching links, or download a whole site with its assets.
+* **Host filtering:** limit the crawl with `--pattern`, `--include` and `--exclude`.
+* **Scripted actions:** type, click, wait, scroll, switch into iframes, set cookies or storage, and more, driven by a JSON file. See [ACTIONS.md](ACTIONS.md).
+* **Cookies and local storage:** reuse a logged-in session, load cookies from a file, or inject local storage.
+* **Processors:** plug in a script that receives each page and extracts what you need (`processors/evernote.js`, `processors/x.js`).
+* **curl downloads:** optionally download files with `curl` instead of the browser.
 
 ## Installation
 
-1.  **Clone the repository:**
+1. **Clone the repository**
 
     ```bash
-    git clone https://github.com/e-tang/tyo-crawler.git
+    git clone https://github.com/tyolab/tyo-crawler.git
     cd tyo-crawler
     ```
 
-2.  **Install dependencies:**
+2. **Install dependencies** (Puppeteer downloads its own Chromium; use Node.js 18 or later)
 
     ```bash
     npm install
     ```
 
-3.  **Redis:** Ensure you have Redis installed and running.
+3. **Run Redis.** The crawler connects to Redis on `localhost:6379`.
+
+    Either install it:
 
     ```bash
-    # Install Redis (example for Ubuntu)
     sudo apt-get update
     sudo apt-get install redis-server
-
-    # Start Redis
     sudo systemctl start redis-server
     ```
 
-    Alternatively, you can use Docker / Docker Compose provided in the repository to run Redis:
-    
+    or use the Docker Compose file in `docker/`:
+
     ```bash
-    cd tyo-crawler
     cd docker
-    docker-compose up -d
+    docker compose up -d
     ```
 
-## Breakdown of Each Parameter
-
-### `"click": null`
-- **Type:** string (CSS selector) or null  
-- **Purpose:** Specifies a CSS selector. If provided, the crawler will attempt to click on the element matching this selector on each page it visits. Useful for interacting with dynamic content (e.g., loading more items, navigating through pagination).  
-- **Default:** `null` (no clicking).  
-
-### `"show-window": false`
-- **Type:** boolean  
-- **Purpose:** Determines whether the browser window should be visible during the crawl.  
-  - `true`: The browser is visible.  
-  - `false` (default): The browser runs in headless mode.  
-- **Default:** `false` (headless).  
-
-### `"with-browser": true`
-- **Type:** boolean  
-- **Purpose:** Controls whether to use a full browser (Puppeteer) for crawling.  
-  - `true` (default): Uses Puppeteer.  
-  - `false`: Uses curl or wget, which is faster but doesn’t execute JavaScript.  
-- **Default:** `true` (use browser).  
-
-### `"next-crawl-wait-time": 31`
-- **Type:** number (seconds)  
-- **Purpose:** Sets the wait time (in seconds) between crawling each subsequent page to avoid overloading the server.  
-- **Default:** `31` seconds.  
-
-### `"level": -1`
-- **Type:** number  
-- **Purpose:** Defines the maximum depth of links to follow.  
-  - `-1`: Unlimited depth.  
-  - `0`: Only crawl the initial URL(s).  
-  - `1`: Crawl the initial URL(s) and links found on those pages.  
-  - `n`: Crawl up to `n` levels deep.  
-- **Default:** `-1` (unlimited).  
-
-### `"pattern": null`
-- **Type:** string (regular expression) or null  
-- **Purpose:** A regular expression to filter URLs. Only matching URLs will be crawled.  
-- **Default:** `null` (crawl all links).  
-
-### `"han": false`
-- **Type:** boolean  
-- **Purpose:** If `true`, the hostname of the first URL is used as the Redis namespace.  
-- **Default:** `false` (default namespace: `tmp`).  
-
-### `"co": []`
-- **Type:** array  
-- **Purpose:** Placeholder for additional custom options.  
-- **Default:** `[]` (empty array).  
-
-### `"output": null`
-- **Type:** string (file path) or null  
-- **Purpose:** Specifies where to save the content of a single crawled URL.  
-- **Default:** `null` (no output file).  
-
-### `"dbhost": "localhost"`
-- **Type:** string  
-- **Purpose:** The hostname or IP address of the Redis server.  
-- **Default:** `"localhost"`.  
-
-### `"dbport": 6379`
-- **Type:** number  
-- **Purpose:** The port number of the Redis server.  
-- **Default:** `6379`.  
-
-### `"with-cookies": false`
-- **Type:** boolean  
-- **Purpose:** Enables or disables cookie handling.  
-- **Default:** `false` (no cookie handling).  
-
-### `"webroot": "./www"`
-- **Type:** string (directory path)  
-- **Purpose:** The root directory where downloaded files are saved.  
-- **Default:** `"./www"`.  
-
-### `"clone": false`
-- **Type:** boolean  
-- **Purpose:** Enables website cloning mode, downloading all resources (images, CSS, JavaScript, etc.).  
-- **Default:** `false`.  
-
-### `"path-pattern": null`
-- **Type:** string (URL path) or null  
-- **Purpose:** Specifies the URL path to match for cloning.  
-- **Default:** `null` (no specific path).  
-
-### `"exclude": []`
-- **Type:** array of strings (regular expressions)  
-- **Purpose:** URLs matching any of these patterns will be excluded.  
-- **Default:** `[]` (no exclusions).  
-
-### `"include": []`
-- **Type:** array of strings (regular expressions)  
-- **Purpose:** Only URLs matching any of these patterns will be included.  
-- **Default:** `[]` (no specific inclusions).  
-
-### `"with-curl": false`
-- **Type:** boolean  
-- **Purpose:** Uses curl to download resources instead of the browser.  
-- **Default:** `false`.  
-
-### `"viewonly": false`
-- **Type:** boolean  
-- **Purpose:** If `true`, the crawler only views pages without downloading them.  
-- **Default:** `false`.  
-
-### `"seed": false`
-- **Type:** boolean  
-- **Purpose:** Enables seed mode, allowing multiple starting URLs.  
-- **Default:** `false`.  
-
-### `"local-storage": null`
-- **Type:** string (file path) or null  
-- **Purpose:** Path to a JSON file containing local storage data to inject into the browser.  
-- **Default:** `null`.  
-
-### `"actions-file": null`
-- **Type:** string (file path) or null  
-- **Purpose:** Path to a JSON file containing actions to perform on pages.  
-- **Default:** `null`.  
-
-### `"wait-time": 1200`
-- **Type:** number (milliseconds)  
-- **Purpose:** Default wait time (in milliseconds) before the next crawl.  
-- **Default:** `1200` ms (1.2 seconds).  
-
-### `"browser-wait-time": 0`
-- **Type:** number (milliseconds)  
-- **Purpose:** Default wait time for the browser to wait after a page loads.  
-- **Default:** `0` milliseconds.  
+    The compose file uses the `bitnami/redis` image, which runs as user 1001, so the `docker/data` folder must be writable by that user (`sudo chown -R 1001:1001 docker/data`). It publishes port 6379 on all interfaces with no password. On a machine others can reach, change the port mapping to `127.0.0.1:6379:6379`.
 
 ## Usage
 
-The crawler is executed via the `index.js` file using Node.js with the parameter(s) explained above.
-
-For example, to crawl a webpage with specific options, you can run:
-```bash
-node index.js --show-window true example.com/awesome-page
-```
-
-But some pages may require authentication or other actions. In such cases, you can create a JSON file with the desired options and run the crawler with that file. Please see `actions.example.json` for an example configuration.
+The entry point is `index.js`. Pass options first and the URL last:
 
 ```bash
-node crawler.js --actions-file actions.json --show-window true example.com/login
+# fetch one page (no link following)
+node index.js --show-window true https://example.com/some-page
+
+# follow links on the same host
+node index.js --seed true https://example.com/
+
+# clone a site to ./www, including its assets
+node index.js --clone true https://example.com/
+
+# log in with scripted actions, then crawl
+node index.js --actions-file ./examples/actions.example.json --show-window true https://example.com/login
 ```
 
-## TODO
--   There are a lot to do
--   COOKIES (--with-cookies) is not working
+Notes:
+
+* Without `--seed` or `--clone`, only the URL you give is processed. Links on it are not followed.
+* `--actions-file` and `--local-storage` files are loaded with `require()`, so use a path starting with `./` or an absolute path. `--actions-file actions.json` (no `./`) fails.
+* Using `--links-file` turns on seed mode.
+* Re-running the same crawl does nothing for links Redis already has marked as done. To start over, clear the namespace, for example `redis-cli --scan --pattern 'tmp:*' | xargs redis-cli del` (or the host name if you used `--han true`).
+
+## Options
+
+Boolean options take `true` or `false`, for example `--clone true`.
+
+### Crawl mode and scope
+
+| Option | Default | What it does |
+|---|---|---|
+| `--seed` | `false` | Follow links from the starting URL(s). Turned on automatically by `--clone` and `--links-file`. |
+| `--clone` | `false` | Download the site and its assets (HTML, images, CSS, JS) under `--webroot`. Implies `--seed`. |
+| `--links-file` | `null` | Text file with one URL per line to use as seeds. |
+| `--pattern` | `null` | Regular expression matched against the **host name** of each link. Only matching hosts are crawled. If you pass it more than once, only the last value is kept, so combine alternatives into one regex (`'a\.com\|b\.com'`). |
+| `--path-pattern` | `null` | In clone mode, only download URLs under this path. Ignored outside clone mode. |
+| `--include` | `[]` | Host-name patterns to allow. In clone mode, links to other hosts are only followed if they match. |
+| `--exclude` | `[]` | Host-name patterns to skip. |
+| `--index-pattern` | `[]` | URL patterns that identify index pages. |
+| `--refresh-index` | `false` | Re-fetch index pages even if they were crawled before. |
+| `--han` | `false` | Use the first URL's host name as the Redis namespace instead of `tmp`. |
+| `--level` | `-1` | Intended to limit crawl depth. **Currently not applied** (see Known issues). |
+
+### Browser and timing
+
+| Option | Default | What it does |
+|---|---|---|
+| `--show-window` | `false` | Show the browser window instead of running headless. Useful when writing actions. |
+| `--with-browser` | `true` | Load pages in Puppeteer. |
+| `--browser-wait-time` | `0` | Page-load timeout in milliseconds (`0` means the 30-second default). It is not a pause after the page loads. |
+| `--wait-time` | `1200` | In clone mode, the pause in milliseconds after more than 6 pages in a row from the same host. Not used in other modes. |
+| `--next-crawl-wait-time` | `31` | Defined but currently not used. |
+| `--click` | `null` | CSS selector to click on each page. |
+| `--viewonly` | `false` | Don't save the first page; just view it. |
+
+### Sessions, actions and processing
+
+| Option | Default | What it does |
+|---|---|---|
+| `--actions-file` | `null` | JSON file of actions to run on matching pages. See [ACTIONS.md](ACTIONS.md) and `examples/`. |
+| `--with-cookies` | `false` | Save cookies to Redis after a page loads and reuse them on later visits to the same host. |
+| `--cookies-file` | `null` | JSON file of cookies to set before the first page. |
+| `--local-storage` | `null` | JSON file of local storage values to inject. |
+| `--processor` | `null` | Processor to run on each page: a name from `processors/` (such as `evernote` or `x`), or an absolute path to your own (`.js` is added if missing). |
+
+### Output
+
+| Option | Default | What it does |
+|---|---|---|
+| `--webroot` | `./www` | Where downloaded files are written. |
+| `--output` | `null` | When fetching a single URL, save it to this file. |
+| `--change-link` | `true` | In clone mode, rewrite links in saved pages to point at the local copies. |
+| `--exists-quit` | `false` | Intended to stop when a file being saved already exists. Currently not used. |
+| `--with-curl` | `false` | Download files with `curl` instead of the browser. |
+
+### Redis
+
+| Option | Default | What it does |
+|---|---|---|
+| `--dbhost` | `localhost` | Redis host. **Currently ignored** (see Known issues). |
+| `--dbport` | `6379` | Redis port. **Currently ignored** (see Known issues). |
+
+## Actions
+
+Actions let the crawler log in, dismiss pop-ups or work inside iframes before a page is processed. Each entry has an `if` (a CSS selector) and a `then` list of actions that run when the selector is found:
+
+```json
+[
+  {
+    "if": "#login-form",
+    "then": [
+      { "action": "type", "selector": "input[name='username']", "value": "your_username" },
+      { "action": "type", "selector": "input[name='password']", "value": "your_password" },
+      { "action": "click", "selector": "button[type='submit']", "on": true }
+    ]
+  }
+]
+```
+
+Supported actions include `click`, `type`, `wait`, `scroll`, `screenshot`, `evaluate`, `eval`, `process`, `iframe`, `goto`, `reload`, `download`, `pull`, `setCookie`, `saveCookies`, `setLocalStorage`, `setSessionStorage`, `close`, `exit` and `hold`. A plain `click` waits for a page navigation afterwards. `hold` only logs a message; it does not stop the crawl.
+
+Keep real usernames and passwords out of git: copy an example to a file that isn't committed.
+
+See [ACTIONS.md](ACTIONS.md) for details, and `examples/` for working files (`actions.example.json`, `evernote.example.json`, `x.example.json`).
+
+## Security notes
+
+* Cookies saved with `--with-cookies` are stored in Redis unencrypted.
+* TLS certificate checks are turned off for downloads (`rejectUnauthorized = false`, and `curl -k` with `--with-curl`).
+* The crawler does not read `robots.txt`. Crawl politely and only where you're allowed to.
+
+## Known issues
+
+* **`--dbhost` and `--dbport` are ignored.** `index.js` passes `{host, port: opts.port}` to the Redis client, but the option is `dbport`, and node-redis v4 expects `{socket: {host, port}}`. The client always connects to `localhost:6379`.
+* **`--level` is not applied.** The depth check compares against a `level` value that `crawl_options` never sets.
+* **`--next-crawl-wait-time` and `--exists-quit` are not used** anywhere in the crawl loop.
+* **`--with-curl` doesn't quote URLs** in the `curl` command, so URLs containing `&` or spaces break.
+* Single-page mode may not exit by itself after it finishes. Press Ctrl+C if it doesn't.
+
+## Licence
+
+See [LICENSE](LICENSE).

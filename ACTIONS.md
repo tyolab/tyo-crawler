@@ -10,7 +10,7 @@ This `actions.json` file defines a series of actions that the crawler can perfor
     - **`type`**: Type text into an input field.
     - **`click`**: Click on an element.
     - **`eval`**: Set a value to an element.
-    - **`hold`**: Stop the crawl if the URL matches.
+    - **`hold`**: Logs the action and the matching URL. It does not stop the crawl.
   - **`selector`**: A CSS selector to identify the element to interact with.
   - **`value`**: The value to type into an input field or set to an element.
   - **`on`**: (For `click` and `hold` actions) A boolean indicating whether the action should be performed. `true` means perform the action, `false` means don't.
